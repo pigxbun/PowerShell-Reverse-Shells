@@ -84,15 +84,19 @@ def run_server(host, port):
         command = input(">")
         command=command.strip()
         if len(command) > 0:
+
+            # pseudo cd command
             if command.find('cd')==0:
                 command="000"+command[2:len(command)].strip()
             elif command.find('chdir')==0:
                 command="000"+command[5:len(command)].strip()
-            print(command)
+            # print(command)
             command_queue.put(command)
             if command == STOP_COMMAND:
                 connected = False
-        while connected and response_queue.empty():
+        i=0
+        while connected and response_queue.empty() and i<100:
+            i+=1
             sleep(0.2)
         while connected and not response_queue.empty():
             print(response_queue.get())
