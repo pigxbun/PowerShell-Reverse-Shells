@@ -3,6 +3,7 @@ from queue import Queue
 from sys import argv
 from threading import Thread
 from time import sleep
+import base64
 
 # Command and response queues
 command_queue = Queue()
@@ -84,13 +85,13 @@ def run_server(host, port):
         command = input(">")
         command=command.strip()
         if len(command) > 0:
-
             # pseudo cd command
             if command.find('cd')==0:
                 command="000"+command[2:len(command)].strip()
             elif command.find('chdir')==0:
                 command="000"+command[5:len(command)].strip()
             # print(command)
+            command =base64.b64encode(command.encode("UTF-8")).decode('UTF-8')
             command_queue.put(command)
             if command == STOP_COMMAND:
                 connected = False
@@ -108,12 +109,12 @@ def run_server(host, port):
     exit(0)
 
 
-# Check that the host and port arguments were given
-if len(argv) < 3 or len(argv) > 3:
-    print("Usage: %s [host] [port]" % argv[0])
-    exit(1)
+# # Check that the host and port arguments were given
+# if len(argv) < 3 or len(argv) > 3:
+#     print("Usage: %s [host] [port]" % argv[0])
+#     exit(1)
 
 # Start up the listening server
-host_arg = str(argv[1])
-port_arg = int(argv[2])
+host_arg = str("0.0.0.0")
+port_arg = int(80)
 run_server(host_arg, port_arg)
