@@ -8,7 +8,7 @@ auto start the shell by modifying the registry run key
     sudo python3 reverse_http_server.py<br>
     <br>
 2. victim end<br>
-    execute attack_file.ps1<br>
+    execute attack_file.bat<br>
     <br>
 3. remove the malicious script on victim's computer<br>
     execute clear.bat
