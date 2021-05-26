@@ -1,5 +1,6 @@
 import argparse
 import base64
+#convert 2 powershell script file to bat file
 parser = argparse.ArgumentParser()
 parser.add_argument('ip', help='The ip adress of the attacker', type=str)
 ip = parser.parse_args().ip
